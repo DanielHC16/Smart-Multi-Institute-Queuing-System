@@ -11,8 +11,8 @@ Run as Administrator.
 #>
 
 # --- Configuration ---
-$SSID = "MyHotspotPS"
-$Key  = "Passw0rd1234"
+$SSID = "MyPublicWifi"
+$Key  = "12345678"
 $PortalIP = "192.168.1.4"
 $PortalPort = 4000
 # Upstream DNS server to forward allowed-client queries to:
@@ -57,6 +57,7 @@ function Assert-Admin {
 }
 
 function Run-HostedNetwork {
+    return $true
     param($ssid, $key)
     Write-Host "Configuring hostednetwork: SSID=$ssid"
     & netsh wlan set hostednetwork mode=allow ssid=$ssid key=$key | Out-Null

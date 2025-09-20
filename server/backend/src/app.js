@@ -12,11 +12,13 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-app.get('/', (req, res) => res.send('Hello from Smart Queue Backend Team!'));
+app.get('/', (req, res) => res.send('<h1>Hello from Smart Queue Backend Team!'));
+app.get('/generate_204', (req, res) =>  res.send('<h1>Hello from Smart Queue Backend Team!'));
+app.get('/hotspot-detect.html', (req, res) =>  res.send('<h1>Hello from Smart Queue Backend Team!'));
 
 //app.use(helmet());
 //app.use(cors({ origin: /* set to allowed origins */ true }));
-//app.use(compression());
+//app.use(compression(    ));
 //app.use(express.json());
 //app.use(morgan('combined'));
 
