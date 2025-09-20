@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Queue Prototype with Users Panel</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; display: flex; gap: 20px; }
+  .panel { flex: 1; }
+  .user { padding: 5px; margin: 2px 0; border: 1px solid black; }
+  .green { background-color: #b0f2b6; }
+  .red { background-color: #f2b0b0; }
+  table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  table-layout: fixed; 
+}
+th, td { 
+  padding: 5px; 
+  text-align: center; 
+  width: 33%; 
+  border: none;        
+}
+
+  button { margin: 2px; }
+  #allUsersPanel { max-height: 80vh; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<div class="panel" id="allUsersPanel">
+  <h2>All Users</h2>
+  <div>
+    <input type="text" id="userName" placeholder="Enter Name" />
+    <button id="submitUser">Submit</button>
+  </div>
+  <div id="allUsersList" style="margin-top:10px;"></div>
+</div>
+
+<div class="panel">
+  <h2>Queue Counters</h2>
+  <table id="queueTable">
+    <thead>
+      <tr>
+        <th>Counter 0</th>
+        <th>Counter 1</th>
+        <th>Counter 2</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const API_URL = 'http://localhost:3000';
+
+
+
+
+// BACKENNDDDD
+async function getCounters() {
+  const res = await fetch(`${API_URL}/counters`);
+  return res.json();
+}
+
+async function addUser(name) {
+  const res = await fetch(`${API_URL}/user`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  return res.json();
+}
+
+async function updateUserStatus(counterIndex, userIndex, status) {
+  await fetch(`${API_URL}/user/${counterIndex}/${userIndex}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+}
+
+async function rotateUser(counterIndex) {
+  await fetch(`${API_URL}/user/${counterIndex}/rotate`, { method: 'POST' });
+}
+
+
+async function renderAllUsers() {
+  const counters = await getCounters();
+  const allUsers = [];
+  Object.values(counters).forEach(counter => counter.forEach(user => allUsers.push(user)));
+
+  const allUsersDiv = document.getElementById('allUsersList');
+  allUsersDiv.innerHTML = '';
+  allUsers.forEach(user => {
+    const div = document.createElement('div');
+    div.className = 'user';
+    if (user.status === 'green') div.classList.add('green');
+    if (user.status === 'red') div.classList.add('red');
+    div.textContent = user.name + (user.status ? ` (${user.status})` : '');
+    allUsersDiv.appendChild(div);
+  });
+}
+
+async function renderQueueTable() {
+  const counters = await getCounters();
+  const tbody = document.querySelector('#queueTable tbody');
+  tbody.innerHTML = '';
+
+  const maxLen = Math.max(counters[0].length, counters[1].length, counters[2].length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const tr = document.createElement('tr');
+
+    for (let j = 0; j < 3; j++) {
+      const td = document.createElement('td');
+
+      const visibleUsers = counters[j].filter(u => u.status !== 'red');
+      if (visibleUsers[i]) {
+        const user = visibleUsers[i];
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user';
+        if (user.status === 'green') userDiv.classList.add('green');
+        userDiv.textContent = user.name;
+
+        if (i === 0) {
+          const processBtn = document.createElement('button');
+          processBtn.textContent = 'Process';
+          processBtn.onclick = async () => {
+            await updateUserStatus(j, counters[j].indexOf(user), 'green');
+            renderAllUsers();
+            renderQueueTable();
+          };
+
+          const missingBtn = document.createElement('button');
+missingBtn.textContent = 'Missing';
+missingBtn.onclick = async () => {
+  await rotateUser(j);
+  await renderAllUsers();   // immediately refresh users
+  await renderQueueTable(); // immediately refresh queue
+};
+    
+
+          const closedBtn = document.createElement('button');
+          closedBtn.textContent = 'Closed';
+          closedBtn.onclick = async () => {
+            await updateUserStatus(j, counters[j].indexOf(user), 'red');
+            renderAllUsers();
+            renderQueueTable();
+          };
+
+          userDiv.appendChild(document.createElement('br'));
+          userDiv.appendChild(processBtn);
+          userDiv.appendChild(missingBtn);
+          userDiv.appendChild(closedBtn);
+        }
+
+        td.appendChild(userDiv);
+      }
+
+      tr.appendChild(td);
+    }
+
+    tbody.appendChild(tr);
+  }
+}
+
+document.getElementById('submitUser').addEventListener('click', async () => {
+  const name = document.getElementById('userName').value.trim();
+  if (!name) return alert('Enter a name');
+  await addUser(name);
+  document.getElementById('userName').value = '';
+  renderAllUsers();
+  renderQueueTable();
+});
+
+renderAllUsers();
+renderQueueTable();
+
+setInterval(() => { renderAllUsers(); renderQueueTable(); }, 2000);
+</script>
+
+</body>
+</html>
