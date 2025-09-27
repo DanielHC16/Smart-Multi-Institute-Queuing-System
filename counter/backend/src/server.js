@@ -10,10 +10,13 @@ app.use(express.json());
 
 const COUNTERS = { 0: [], 1: [], 2: [] };
 
+function getActiveUser(index) {
+  return COUNTERS[index].filter(i => i.status != 'red')
+}
 function getLeastLoadedCounter() {
   let min = 0;
   for (let i = 1; i < 3; i++) {
-    if (COUNTERS[i].length < COUNTERS[min].length) min = i;
+    if (getActiveUser(i).length < getActiveUser(min).length) min = i;
   }
   return min;
 }

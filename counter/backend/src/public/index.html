@@ -54,9 +54,6 @@ th, td {
 <script>
 const API_URL = 'http://localhost:3000';
 
-
-
-
 // BACKENNDDDD
 async function getCounters() {
   const res = await fetch(`${API_URL}/counters`);
@@ -133,11 +130,11 @@ async function renderQueueTable() {
           };
 
           const missingBtn = document.createElement('button');
-missingBtn.textContent = 'Missing';
-missingBtn.onclick = async () => {
-  await rotateUser(j);
-  await renderAllUsers();   // immediately refresh users
-  await renderQueueTable(); // immediately refresh queue
+          missingBtn.textContent = 'Missing';
+          missingBtn.onclick = async () => {
+            await rotateUser(j);
+            await renderAllUsers();   // immediately refresh users
+            await renderQueueTable(); // immediately refresh queue
 };
     
 
