@@ -26,13 +26,8 @@
     async function loadDevices() {
       const res = await fetch("/api/devices");
       const data = await res.json();
-      const tbody = document.querySelector("#tbl tbody");
-      tbody.innerHTML = "";
-      for (const d of data) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.ip}</td><td>${d.mac}</td><td>${d.sessionId}</td><td>${d.userType}</td><td>${d.dateCreated}</td>`;
-        tbody.appendChild(tr);
-      }
+      const tbody = document.querySelector("#tbl");
+      tbody.innerHTML = JSON.stringify(data);
     }
     loadDevices();
     setInterval(loadDevices, 2000);

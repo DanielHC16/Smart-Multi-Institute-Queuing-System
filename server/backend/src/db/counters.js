@@ -11,6 +11,6 @@ export function createCounter(sessionId, counter) {
 export function updateCounter(sessionId, counter) {
     counters.set(sessionId, counter)
 }
-export function deleteCounter(sessionId) {
+export function delCounter(sessionId) {
     counters.delete(sessionId)
 }

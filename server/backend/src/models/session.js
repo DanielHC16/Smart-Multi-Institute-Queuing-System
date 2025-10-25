@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 
 export class Session {
   constructor(ip, mac, id, userType = "applicant") {
