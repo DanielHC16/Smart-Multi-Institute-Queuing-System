@@ -1,23 +1,9 @@
+import express from "express";
+import { getCurrentSession, getSessions } from "../controllers/session.controller.js";
 
-import arp from "node-arp";
-import { fetchSessions } from "../db/sessions.js";
+const sessionRoutes = express.Router();
 
-export async function getCurrentSession(req, res) {
+sessionRoutes.get("/devices", getSessions);
+sessionRoutes.get("/session", getCurrentSession);
 
-  const ip =
-    req.headers["x-forwarded-for"]?.split(",")[0] ||
-    req.socket.remoteAddress?.replace("::ffff:", "") ||
-    "unknown";
-
-  let mac = "unknown";
-  await new Promise(resolve => {
-    arp.getMAC(ip, (err, macAddr) => {
-      mac = macAddr || "unknown";
-      resolve();
-    });
-  });
-
-  const results = fetchSessions()
-  const session = results.get(mac);
-  res.json(session);
-};
+export default sessionRoutes;

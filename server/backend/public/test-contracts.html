@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Queue API Tester</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+    h2, h3 { color: #00bcd4; }
+    h4 { color: #ff9800; margin-top: 20px; margin-bottom: 8px; }
+    code { color: #8bc34a; }
+    button {
+      margin: 4px; padding: 8px 12px; background: #333; color: #fff; border: none;
+      cursor: pointer; border-radius: 4px;
+    }
+    button:hover { background: #555; }
+    pre {
+      background: #1b1b1b; padding: 15px; border-radius: 8px;
+      white-space: pre-wrap; word-wrap: break-word; line-height: 1.4;
+    }
+    input, textarea {
+      background: #1b1b1b; color: #eee; border: 1px solid #444; border-radius: 4px;
+      padding: 8px; margin: 4px; font-family: monospace;
+    }
+    input { width: 300px; }
+    textarea { width: 300px; height: 80px; resize: vertical; }
+    .section { margin-bottom: 30px; padding: 15px; background: #1a1a1a; border-radius: 8px; }
+    label { display: block; margin: 8px 0 4px 0; color: #aaa; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>Smart Queue API Tester</h2>
+  <p>Base URL: <code>http://192.168.1.6:4000/api</code></p>
+
+  <!-- Session & Devices -->
+  <div class="section">
+    <h4>Session & Devices</h4>
+    <button onclick="testEndpoint('GET', '/session')">GET /session</button>
+    <button onclick="testEndpoint('GET', '/devices')">GET /devices</button>
+    <button onclick="testEndpoint('GET', '/server/check')">GET /server/check</button>
+  </div>
+
+  <!-- Counters -->
+  <div class="section">
+    <h4>Counters</h4>
+    
+    <div>
+      <button onclick="testEndpoint('GET', '/counters')">GET /counters</button>
+      <button onclick="testEndpoint('POST', '/counters')">POST /counters (create)</button>
+    </div>
+
+    <div>
+      <label>Session ID (for GET/PUT/DELETE by ID):</label>
+      <input id="sessionId" type="text" placeholder="Enter session ID" />
+    </div>
+
+    <div>
+      <button onclick="testEndpoint('GET', '/counters', true)">GET /counters/:id</button>
+      <button onclick="testEndpoint('DELETE', '/counters', true)">DELETE /counters/:id</button>
+    </div>
+
+    <div>
+      <label>Counter Object (for PUT /counters/:id):</label>
+      <textarea id="counterData" placeholder='{"status": "active", "counterId": "counter-123"}'>{
+  "status": "active"
+}</textarea>
+      <br />
+      <button onclick="testPutCounter()">PUT /counters/:id</button>
+    </div>
+  </div>
+
+  <h3>Response</h3>
+  <pre id="output">No request yet.</pre>
+
+  <script>
+    const BASE = "http://192.168.1.6:4000/api";
+
+    async function testEndpoint(method, path, needsId = false) {
+      const sessionId = document.getElementById("sessionId").value.trim();
+      const output = document.getElementById("output");
+      output.textContent = "Loading...";
+
+      try {
+        if (needsId && !sessionId) {
+          output.textContent = "Error: Session ID is required for this action.";
+          return;
+        }
+
+        const target = needsId ? `${path}/${sessionId}` : path;
+        const opts = { 
+          method, 
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" } 
+        };
+
+        const res = await fetch(BASE + target, opts);
+        const text = await res.text();
+
+        let formatted;
+        try {
+          const json = JSON.parse(text);
+          formatted = JSON.stringify(json, null, 2);
+        } catch {
+          formatted = text;
+        }
+
+        output.textContent = `Method: ${method}\nEndpoint: ${target}\nStatus: ${res.status}\n\n${formatted}`;
+      } catch (err) {
+        output.textContent = "Error: " + err;
+      }
+    }
+
+    async function testPutCounter() {
+      const sessionId = document.getElementById("sessionId").value.trim();
+      const counterDataRaw = document.getElementById("counterData").value.trim();
+      const output = document.getElementById("output");
+      output.textContent = "Loading...";
+
+      try {
+        if (!sessionId) {
+          output.textContent = "Error: Session ID is required for PUT /counters/:id";
+          return;
+        }
+
+        let counterData;
+        try {
+          counterData = JSON.parse(counterDataRaw);
+        } catch (e) {
+          output.textContent = "Error: Invalid JSON in Counter Data field\n" + e.message;
+          return;
+        }
+
+        const target = `/counters/${sessionId}`;
+        const opts = {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ counter: counterData })
+        };
+
+        const res = await fetch(BASE + target, opts);
+        const text = await res.text();
+
+        let formatted;
+        try {
+          const json = JSON.parse(text);
+          formatted = JSON.stringify(json, null, 2);
+        } catch {
+          formatted = text;
+        }
+
+        output.textContent = `Method: PUT\nEndpoint: ${target}\nStatus: ${res.status}\nRequest Body: ${JSON.stringify({ counter: counterData }, null, 2)}\n\nResponse:\n${formatted}`;
+      } catch (err) {
+        output.textContent = "Error: " + err;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -18,7 +18,7 @@
 <body>
   <h2>Active Devices</h2>
   <table id="tbl">
-    <thead><tr><th>IP</th><th>MAC</th><th>Session Id</th><th>User Type</th><th>Date Created</th></tr></thead>
+    <thead><tr><th>Session Id</th><th>Device Id</th><th>IP</th><th>User Type</th><th>Date Created</th></tr></thead>
     <tbody></tbody>
   </table>
 
@@ -28,9 +28,13 @@
       const data = await res.json();
       const tbody = document.querySelector("#tbl tbody");
       tbody.innerHTML = "";
-      for (const d of data) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.ip}</td><td>${d.mac}</td><td>${d.sessionId}</td><td>${d.userType}</td><td>${d.dateCreated}</td>`;
+      for (const [sid, session] of Object.entries(data || {})) {
+        const tr = document.createElement('tr');
+        const deviceId = session?.deviceId || '';
+        const ip = session?.ip || '';
+        const userType = session?.userType || '';
+        const dateCreated = session?.dateCreated || '';
+        tr.innerHTML = `<td>${sid}</td><td>${deviceId}</td><td>${ip}</td><td>${userType}</td><td>${dateCreated}</td>`;
         tbody.appendChild(tr);
       }
     }

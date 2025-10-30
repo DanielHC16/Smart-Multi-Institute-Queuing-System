@@ -1,176 +1,177 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta charset="utf-8">
-  <title>Server Page</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
-    }
-    #controls {
-      margin-bottom: 20px;
-    }
-    button {
-      font-size: 1rem;
-      padding: 8px 14px;
-      cursor: pointer;
-      background: #0f0;
-      border: none;
-      border-radius: 6px;
-      color: #000;
-    }
-    #counterContainer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-    }
-    .counterBox {
-      background: #222;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 15px;
-      min-width: 220px;
-      text-align: center;
-      position: relative;
-    }
-    .counterId {
-      font-weight: bold;
-      font-size: 1.1rem;
-      margin-bottom: 6px;
-    }
-    .status {
-      color: #0af;
-      margin-bottom: 6px;
-    }
-    .mac {
-      color: #ff0;
-      margin-bottom: 8px;
-    }
-    .deleteBtn {
-      background: red;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-  </style>
+	<meta charset="utf-8" />
+	<title>Server Page</title>
+	<style>
+		body {
+			background: #111;
+			color: #fff;
+			font-family: monospace;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			padding: 40px;
+		}
+
+		#controls {
+			margin-bottom: 20px;
+		}
+
+		button {
+			font-size: 1rem;
+			padding: 8px 14px;
+			cursor: pointer;
+			background: #0f0;
+			border: none;
+			border-radius: 6px;
+			color: #000;
+		}
+
+		#counterContainer {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			justify-content: center;
+		}
+
+		.counterBox {
+			background: #222;
+			border: 1px solid #333;
+			border-radius: 8px;
+			padding: 15px;
+			min-width: 220px;
+			text-align: center;
+			position: relative;
+		}
+
+		.counterId {
+			font-weight: bold;
+			font-size: 1.1rem;
+			margin-bottom: 6px;
+		}
+
+		.status {
+			color: #0af;
+			margin-bottom: 6px;
+		}
+
+		.mac {
+			color: #ff0;
+			margin-bottom: 8px;
+		}
+
+		.deleteBtn {
+			background: red;
+			color: #fff;
+			border: none;
+			border-radius: 4px;
+			padding: 4px 8px;
+			cursor: pointer;
+			margin-top: 8px;
+		}
+	</style>
 </head>
+
 <body>
-  <h2>Server Counter Sessions</h2>
-  <div id="controls">
-    <button id="addCounterBtn">+ Add Counter</button>
-  </div>
-  <div id="counterContainer"></div>
+	<h2>Server Counter Sessions</h2>
+	<div id="controls">
+		<button id="addCounterBtn">+ Add Counter</button>
+	</div>
+	<div id="counterContainer"></div>
 
-  <script>
-    const container = document.getElementById("counterContainer");
-    const addBtn = document.getElementById("addCounterBtn");
-    let counterCount = 0;
+	<script>
+		const container = document.getElementById("counterContainer");
+		const addBtn = document.getElementById("addCounterBtn");
 
-    async function checkAdminAccess() {
-      try {
-        const res = await fetch("/api/server/check", { cache: "no-store" });
-        if (!res.ok) window.location.href = "/users/404.html";
-        const data = await res.json();
-        if (!data.isServer) window.location.href = "/users/404.html";
-      } catch {
-        window.location.href = "/users/404.html";
-      }
-    }
+		async function checkAdminAccess() {
+			try {
+				const res = await fetch("/api/server/check", { cache: "no-store" });
+				if (!res.ok) window.location.href = "/users/404.html";
+				const data = await res.json();
+				if (!data.isServer) window.location.href = "/users/404.html";
+			} catch {
+				window.location.href = "/users/404.html";
+			}
+		}
 
-    function renderCounter(sessionId, createdAt, status, mac) {
-      const box = document.createElement("div");
-      box.className = "counterBox";
-      box.dataset.sessionId = sessionId;
-      box.innerHTML = `
-        <div class="counterId">${sessionId}</div>
-        <div>Created: ${new Date(createdAt).toLocaleTimeString()}</div>
-        <div class="status">Status: <strong>${status}</strong></div>
-        <div class="mac">MAC: ${mac}</div>
-        <button class="deleteBtn">×</button>
-      `;
-      box.querySelector(".deleteBtn").onclick = () => deleteCounterSession(sessionId);
-      container.appendChild(box);
-    }
+		function renderCounter(counterId, sessionId, createdAt, status) {
+			const box = document.createElement("div");
+			box.className = "counterBox";
+			box.dataset.counterId = counterId;
+			box.innerHTML = `
+				<div class="counterId">${counterId}</div>
+				<div class="sessionId">Device: ${sessionId}</div>
+				<div>Created: ${new Date(createdAt).toLocaleTimeString()}</div>
+				<div class="status">Status: <strong>${status}</strong></div>
+				<button class="deleteBtn">×</button>
+			`;
 
-    async function createCounterSession() {
-      counterCount++;
-      const sessionId = `session-${Date.now()}-${counterCount}`;
-      const createdAt = new Date().toISOString();
-      const status = "Inactive";
-      let mac = "unknown";
-      try {
-        const res = await fetch("/api/mac");
-        const data = await res.json();
-        mac = data.mac || "unknown";
-      } catch {
-        mac = "unknown";
-      }
-      const counter = { sessionId, createdAt, status, mac };
-      renderCounter(sessionId, createdAt, status, mac);
-      onSessionCreated(sessionId, counter);
-    }
+			box.querySelector(".deleteBtn").onclick = () => deleteCounterSession(counterId);
+			container.appendChild(box);
+		}
 
-    function deleteCounterSession(sessionId) {
-      const el = container.querySelector(`[data-session-id='${sessionId}']`);
-      if (el) el.remove();
-      onSessionDeleted(sessionId);
-    }
+		async function createSession() {
+			addBtn.disabled = true;
+			const oldText = addBtn.textContent;
+			addBtn.textContent = 'Adding...';
+			try {
+				const res = await fetch("/api/counters", { method: "POST" });
+				if (res.ok) {
+					const json = await res.json();
+					const id = json.counterId;
+					if (!container.querySelector(`[data-counter-id='${id}']`)) {
+						renderCounter(id, "", new Date().toISOString(), "inactive");
+					}
+					loadCounters().catch(() => {});
+				} else {
+					console.error('Failed to create counter', await res.text());
+				}
+			} catch (err) {
+				console.error("Error creating session:", err);
+			} finally {
+				addBtn.disabled = false;
+				addBtn.textContent = oldText;
+			}
+		}
 
-    async function loadCounters() {
-      try {
-        const res = await fetch("/api/counters", { cache: "no-store" });
-        const data = await res.json();
-        container.innerHTML = "";
-        Object.entries(data).forEach(([id, counter]) => {
-          renderCounter(
-            counter.sessionId,
-            counter.createdAt,
-            counter.status,
-            counter.mac || "None"
-          );
-        });
-      } catch (err) {
-        console.error("Error loading counters:", err);
-      }
-    }
+		async function deleteCounterSession(counterId) {
+			const el = container.querySelector(`[data-counter-id='${counterId}']`);
+			if (el) el.remove();
+			try {
+				await fetch(`/api/counters/${encodeURIComponent(counterId)}`, { method: "DELETE" });
+			} catch (err) {
+				console.error("Error deleting session:", err);
+			}
+		}
 
-    async function onSessionCreated(sessionId, counter) {
-      try {
-        await fetch("/api/counters", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, counter }),
-        });
-      } catch (err) {
-        console.error("Error creating session:", err);
-      }
-    }
 
-    async function onSessionDeleted(sessionId) {
-      try {
-        await fetch(`/api/counters/${sessionId}`, { method: "DELETE" });
-      } catch (err) {
-        console.error("Error deleting session:", err);
-      }
-    }
+		async function loadCounters() {
+			try {
+				const res = await fetch("/api/counters", { cache: "no-store" });
+				const data = await res.json();
+				container.innerHTML = "";
+				Object.entries(data).forEach(([id, counter]) => {
+					renderCounter(
+						id,
+						counter.sessionId || "",
+						counter.createdAt || counter.dateCreated || Date.now(),
+						counter.status || "inactive"
+					);
+				});
+			} catch (err) {
+				console.error("Error loading counters:", err);
+			}
+		}
+		window.onload = async () => {
+			await checkAdminAccess();
+			loadCounters();
+			setInterval(loadCounters, 5000);
+		};
 
-    window.onload = async () => {
-      await checkAdminAccess();
-      loadCounters();
-      setInterval(loadCounters, 5000);
-    };
-
-    addBtn.onclick = createCounterSession;
-  </script>
+		addBtn.onclick = createSession;
+	</script>
 </body>
+
 </html>
